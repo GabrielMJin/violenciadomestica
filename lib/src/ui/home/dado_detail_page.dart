@@ -25,6 +25,7 @@ class _CoinDetailPageState extends State<CoinDetailPage> {
     Dio _dio = new Dio();
     Response _response;
     try {
+      print('test');
       _response = await _dio
           .get("https://api.coingecko.com/api/v3/coins/${widget.coinId}");
       // print("Response data : ${_response.data}");

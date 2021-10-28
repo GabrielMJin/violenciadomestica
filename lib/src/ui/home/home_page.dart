@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:coingecko_coinlist/src/ui/home/coin_detail_page.dart';
+import 'package:coingecko_coinlist/src/ui/home/dado_detail_page.dart';
 import 'package:coingecko_coinlist/src/widgets/coin_list_shimmer_widget.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
@@ -18,13 +18,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  var coinLists;
-  var _listCoin = [];
+  var dataLists;
+  var _listData = [];
   // final formatter = intl.NumberFormat.decimalPattern();
   final formatter = intl.NumberFormat("#,##0.0######"); // for price change
   final percentageFormat = intl.NumberFormat("##0.0#"); // for price change
   Timer? _timer;
-  int _itemPerPage = 1, _currentMax = 10;
+  int _itemPerPage = 1, _currentMax = 9;
   bool _isLoading = true;
 
   ScrollController _scrollController = ScrollController();
@@ -57,16 +57,17 @@ class _HomePageState extends State<HomePage> {
     Dio _dio = new Dio();
     Response _response;
     try {
+      print('1');
       _response = await _dio.get(
-          "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=$_itemPerPage&sparkline=false");
+          "http://192.168.0.18:3000/dados?page=$_itemPerPage", options: Options(sendTimeout: 3000, receiveTimeout: 3000));
       print("Response data : ${_response.data}");
       // _listCoin = _response.data;
-      if (_listCoin == null) {
-        _listCoin = List.generate(10, (i) => _response.data[i]);
+      if (_listData.isEmpty) {
+        _listData = List.generate(_response.data['data'].length, (i) => _response.data['data'][i]);
       } else {
         int j = 0;
-        for (int i = _currentMax; i < _currentMax + 10; i++) {
-          _listCoin.add(_response.data[j]);
+        for (int i = _currentMax; i < _currentMax + 9; i++) {
+          _listData.add(_response.data['data'][j]);
           j++;
         }
       }
@@ -75,8 +76,8 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {});
     } on DioError catch (e) {
-      String errorMessage = e.response!.data.toString();
-      print("Error message : $errorMessage");
+      print("teste");
+      print(e.message);
       switch (e.type) {
         case DioErrorType.connectTimeout:
           break;
@@ -85,7 +86,6 @@ class _HomePageState extends State<HomePage> {
         case DioErrorType.receiveTimeout:
           break;
         case DioErrorType.response:
-          errorMessage = e.response!.data["error"];
           break;
         case DioErrorType.cancel:
           break;
@@ -148,7 +148,7 @@ class _HomePageState extends State<HomePage> {
                         height: 50,
                         child: Center(
                             child: Text(
-                          "COIN LIST",
+                          "Violência Doméstica",
                           style: TextStyle(
                               fontSize: 20,
                               color: Colors.white,
@@ -166,7 +166,7 @@ class _HomePageState extends State<HomePage> {
                             _isLoading = true;
                             _itemPerPage = 1;
                             _currentMax = 10;
-                            _listCoin.clear();
+                            _listData.clear();
                           });
                           await getCoinList();
                         },
@@ -180,24 +180,24 @@ class _HomePageState extends State<HomePage> {
                                   child: ListView.builder(
                                       shrinkWrap: true,
                                       controller: _scrollController,
-                                      itemCount: _listCoin.length + 1,
+                                      itemCount: _listData.length + 1,
                                       itemBuilder: (context, i) {
-                                        if (i == _listCoin.length) {
+                                        if (i == _listData.length) {
                                           return CupertinoActivityIndicator();
                                         }
                                         return Bounceable(
                                           onTap: () {
-                                            print("${_listCoin[i]['id']}");
+                                            //print("${_listCoin[i]}");
                                             // ScaffoldMessenger.of(context)
                                             //     .showSnackBar(SnackBar(
                                             //         content: Text(
                                             //             "${_listCoin[i]['id']} is tapped")));
-                                            Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        CoinDetailPage(
-                                                            coinId: _listCoin[i]
-                                                                ['id'])));
+                                            //Navigator.of(context).push(
+                                                //MaterialPageRoute(
+                                                    //builder: (context) =>
+                                                        //CoinDetailPage(
+                                                            //coinId: _listCoin[i]
+                                                                //['id'])));
                                           },
                                           child: Container(
                                             // color: Colors.blue,
@@ -236,12 +236,6 @@ class _HomePageState extends State<HomePage> {
                                                           CrossAxisAlignment
                                                               .center,
                                                       children: [
-                                                        Container(
-                                                          height: 25,
-                                                          width: 25,
-                                                          child: Image.network(
-                                                              "${_listCoin[i]['image']}"),
-                                                        ),
                                                         SizedBox(width: 5),
                                                         Column(
                                                           mainAxisAlignment:
@@ -251,37 +245,26 @@ class _HomePageState extends State<HomePage> {
                                                               CrossAxisAlignment
                                                                   .start,
                                                           children: [
-                                                            Text(
-                                                                "${_listCoin[i]['symbol'].toUpperCase()}/USD"),
-                                                            (_listCoin[i][
-                                                                        'price_change_24h'] >
-                                                                    0)
-                                                                ? Row(
+                                                            true
+                                                                ? Column(
                                                                     mainAxisAlignment:
                                                                         MainAxisAlignment
                                                                             .start,
+                                                                    crossAxisAlignment: CrossAxisAlignment.start,
                                                                     children: [
-                                                                      Icon(
-                                                                          Icons
-                                                                              .arrow_drop_up_sharp,
-                                                                          color:
-                                                                              Colors.green[600]),
                                                                       Text(
-                                                                        // "${_listCoin[i]['price_change_24h']}",
-                                                                        (_listCoin[i]['current_price'] <
-                                                                                2)
-                                                                            ? formatter.format(_listCoin[i]['price_change_24h'])
-                                                                            : percentageFormat.format(_listCoin[i]['price_change_24h']),
+                                                                        // ,
+                                                                        'LOCAL : ${_listData[i]['municipio_do_fato']} - ',
                                                                         style: TextStyle(
                                                                             color:
                                                                                 Colors.green,
                                                                             fontSize: 11),
                                                                       ),
                                                                       Text(
-                                                                        " (${percentageFormat.format(_listCoin[i]['price_change_percentage_24h'])}%)",
+                                                                        _listData[i]['regiao_geografica'],
                                                                         style: TextStyle(
                                                                             color:
-                                                                                Colors.green,
+                                                                                Colors.red,
                                                                             fontSize: 11),
                                                                       ),
                                                                     ],
@@ -298,17 +281,14 @@ class _HomePageState extends State<HomePage> {
                                                                               Colors.red),
                                                                       Text(
                                                                         // "${_listCoin[i]['price_change_24h']}",
-                                                                        (_listCoin[i]['current_price'] <
-                                                                                2)
-                                                                            ? formatter.format(_listCoin[i]['price_change_24h'])
-                                                                            : percentageFormat.format(_listCoin[i]['price_change_24h']),
+                                                                       'teste3',
                                                                         style: TextStyle(
                                                                             color:
                                                                                 Colors.red,
                                                                             fontSize: 10.5),
                                                                       ),
                                                                       Text(
-                                                                        " (${percentageFormat.format(_listCoin[i]['price_change_percentage_24h'])}%)",
+                                                                        "teste4",
                                                                         style: TextStyle(
                                                                             color:
                                                                                 Colors.red,
@@ -331,7 +311,7 @@ class _HomePageState extends State<HomePage> {
                                                             children: [
                                                               Flexible(
                                                                 child: Text(
-                                                                  "\$${formatter.format(_listCoin[i]['current_price'])}",
+                                                                  '${_listData[i]['data_do_fato']}',
                                                                   style: TextStyle(
                                                                       fontSize:
                                                                           13.5),
@@ -341,13 +321,13 @@ class _HomePageState extends State<HomePage> {
                                                                   height: 3),
                                                               Row(
                                                                 children: [
-                                                                  Text("High",
+                                                                  Text("Nª Envolvidos",
                                                                       style: TextStyle(
                                                                           fontSize:
                                                                               8)),
                                                                   Spacer(),
                                                                   Text(
-                                                                    "\$${_listCoin[i]['high_24h']}",
+                                                                    _listData[i]['total_de_envolvidos'],
                                                                     style: TextStyle(
                                                                         fontSize:
                                                                             9,
@@ -358,18 +338,20 @@ class _HomePageState extends State<HomePage> {
                                                               ),
                                                               Row(
                                                                 children: [
-                                                                  Text("Low",
+                                                                  Text("Vítima - ",
                                                                       style: TextStyle(
                                                                           fontSize:
                                                                               8)),
-                                                                  Spacer(),
-                                                                  Text(
-                                                                    "\$${_listCoin[i]['low_24h']}",
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            9,
-                                                                        color: Colors
-                                                                            .red),
+                                                                  SizedBox(width: 5,),
+                                                                  Expanded(
+                                                                    child: Text(
+                                                                      _listData[i]['sexo'] == 'FEMININO' ? 'MULHER' : 'HOMEM',
+                                                                      style: TextStyle(
+                                                                          fontSize:
+                                                                              9,
+                                                                          color: Colors
+                                                                              .red),overflow: TextOverflow.ellipsis, maxLines: 1,
+                                                                    ),
                                                                   ),
                                                                 ],
                                                               ),
@@ -389,29 +371,6 @@ class _HomePageState extends State<HomePage> {
                               ),
                       ),
                     ]),
-                  ),
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Container(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("Developed by Kevin Lauren",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12)),
-                          Text(
-                            "Powered by CoinGecko API",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ],
               ),
